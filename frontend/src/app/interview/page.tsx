@@ -16,7 +16,8 @@ import {
 } from "../../components/ui/avatar";
 //import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 //import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Editor, EditorProps } from "@monaco-editor/react";
+import { Editor, EditorProps } from "@monaco-editor/react"
+import { handleGroq } from "@/lib/utils";
 import * as monaco from "monaco-editor";
 import AgentInterface from "@/components/AgentInterface";
 
@@ -25,9 +26,11 @@ export default function InterviewPage() {
   const [answer, setAnswer] = useState();
   const [language, setLanguage] = useState<string>("javascript");
   const [runProgram, setRunProgram] = useState<boolean>(false);
-  const searchParams = useSearchParams();
-  const topic = searchParams.get("topic");
-  const difficulty = searchParams.get("difficulty");
+
+  const [runGPT, setRunGPT] = useState<boolean>(false);
+  const searchParams = useSearchParams()
+  const topic = searchParams.get("topic")
+  const difficulty = searchParams.get("difficulty")
   const workerRef = useRef<Worker>();
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
 
@@ -63,6 +66,7 @@ export default function InterviewPage() {
     // the idea of this is to capture the entire function that was written and then run it based on the "section" that calls the function
     // the return is conslole logs and return statments (return statements match to the test case)
     if (runProgram) {
+
       workerRef.current = new Worker(new URL("./worker.ts", import.meta.url));
       workerRef.current.postMessage({ code, language });
       workerRef.current.onmessage = (e) => {
@@ -74,6 +78,22 @@ export default function InterviewPage() {
 
     setRunProgram(false);
 
+    if(runGPT) {
+      const fetchGPTResult = async () => {
+	const result = await handleGroq();
+	console.log(result.question);
+	console.log(result.examples);
+	console.log(result.difficulty);
+	console.log(result.constraints);
+	for(let i  = 0; i < result.test_cases.length; i++) {
+	  console.log(result.test_cases[i].input);
+	  console.log(result.test_cases[i].expected_output);
+	}
+	console.log(result);
+      }
+      fetchGPTResult();
+    }
+  
     // In a real app, you would fetch the question from an API based on the topic and difficulty
     setQuestion({
       title: `Sample ${topic} Question (${difficulty})`,
@@ -82,8 +102,11 @@ export default function InterviewPage() {
       constraints: "- 1 <= n <= 10^5\n- -10^9 <= nums[i] <= 10^9",
       examples:
         "Input: nums = [2,7,11,15], target = 9\nOutput: [0,1]\nExplanation: Because nums[0] + nums[1] == 9, we return [0, 1].",
-    });
-  }, [topic, difficulty, runProgram]);
+    })
+
+    setRunProgram(false);
+    setRunGPT(false);
+  }, [topic, difficulty, runProgram, runGPT])
 
   return (
     <div className="flex h-screen">
@@ -130,6 +153,7 @@ export default function InterviewPage() {
           <div className="flex flex-col">
             <button onClick={showValue}>show value</button>
             <button onClick={() => setRunProgram(true)}>Run</button>
+            <button onClick={() => setRunGPT(true)}>GPT</button>
           </div>
           <Editor
             height="90vh"
