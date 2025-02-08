@@ -1,5 +1,4 @@
 import Groq from "groq-sdk";
-import { z } from "zod";
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
@@ -17,11 +16,12 @@ export async function handleGroq() {
     messages: [
       {
 	role: "system",
-	content: `You are supposed to create a software engineering technical interview problem for leetcode style/data structures and algorithms in JSON format. The JSON format should look like: 
+	content: `You are supposed to create a software engineering technical interview problem for leetcode style/data structures and algorithms in JSON format (PLEASE AVOID TREE PROBLEMS). The JSON format should look like: 
 	    question: string (the acutal question),
 	    difficulty: string (how hard the question is going to be; similar to leetcode)
 	    examples: array of strings (examples of what a solution to an example would look like)
-	    constraints: string (what are some boundaries that the interviewer shoudl know?)`
+	    constraints: string (what are some boundaries that the interviewer shoudl know?)
+	    test_cases: array of this object type: [{ input, expected_output }] (the input is the actual test case where they are going to run against to see if they solved it, the expected_output is what the correct answer should be for the input)`
       },
       {
 	role: "user",

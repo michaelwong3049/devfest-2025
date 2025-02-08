@@ -69,6 +69,11 @@ export default function InterviewPage() {
 	console.log(result.examples);
 	console.log(result.difficulty);
 	console.log(result.constraints);
+	for(let i  = 0; i < result.test_cases.length; i++) {
+	  console.log(result.test_cases[i].input);
+	  console.log(result.test_cases[i].expected_output);
+	}
+	console.log(result);
       }
       fetchGPTResult();
     }
