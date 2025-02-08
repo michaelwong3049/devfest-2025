@@ -60,12 +60,19 @@ def interpret_code(user_code: str, test_cases: list): # should take the users co
                 })
                 logging.info(f"Test case passed: {result == test_case['expected_output']}") # logs if the test case passed or failed
             except Exception as e:
-                results.append({"input": test_case["input"], "expected": test_case["expected_output"], "output": result, "passed": result == test_case["expected_output"]}) # if the code fails, it adds the test case to the results
+                results.append(
+                    {
+                        "input": test_case["input"],
+                        "expected": test_case["expected_output"],
+                        "output": result,
+                        "passed": result == test_case["expected_output"],
+                    }
+                )  # if the code fails, it adds the test case to the results
 
         return results
-    
+
     except Exception as e:
-        return {"error": str(e)} # failsafe in case the code is invalid
+        return {"error": str(e)}  # failsafe in case the code is invalid
 
 
 if __name__ == "__main__":
