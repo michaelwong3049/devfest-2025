@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from dotenv import load_dotenv
 
 from livekit import rtc
 from livekit.agents import (
@@ -14,8 +13,13 @@ from livekit.agents import (
 from livekit.agents.multimodal import MultimodalAgent
 from livekit.plugins import openai
 
+from prompts import INSTRUCTIONS, WELCOME_MESSAGE
+from assistant import AssistantFnc
 
-load_dotenv(dotenv_path=".env.local")
+from dotenv import load_dotenv
+
+load_dotenv(dotenv_path="backend/.env.local")
+
 logger = logging.getLogger("my-worker")
 logger.setLevel(logging.INFO)
 
@@ -35,28 +39,25 @@ def run_multimodal_agent(ctx: JobContext, participant: rtc.RemoteParticipant):
     logger.info("starting multimodal agent")
 
     model = openai.realtime.RealtimeModel(
-        instructions=(
-            "You are a voice assistant created by LiveKit. Your interface with users will be voice. "
-            "You should use short and concise responses, and avoiding usage of unpronouncable punctuation. "
-            "You were created as a demo to showcase the capabilities of LiveKit's agents framework."
-        ),
+        instructions=INSTRUCTIONS,
         modalities=["audio", "text"],
     )
 
     # create a chat context with chat history, these will be synchronized with the server
     # upon session establishment
-    chat_ctx = llm.ChatContext()
-    chat_ctx.append(
-        text="Context about the user: you are talking to a software engineer who's building voice AI applications."
-        "Greet the user with a friendly greeting and ask how you can help them today.",
-        role="assistant",
-    )
+    assistant_fnc = AssistantFnc()
 
     agent = MultimodalAgent(
         model=model,
-        chat_ctx=chat_ctx,
+        fnc_ctx=assistant_fnc,
     )
     agent.start(ctx.room, participant)
+
+    session = model.sessions[0]
+    session.conversation.item.create(
+        llm.ChatMessage(role="assistant", content=WELCOME_MESSAGE)
+    )
+    session.response.create()
 
     # to enable the agent to speak first
     agent.generate_reply()
