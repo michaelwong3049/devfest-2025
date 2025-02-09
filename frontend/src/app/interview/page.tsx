@@ -63,6 +63,16 @@ export default function InterviewPage() {
     // the idea of this is to capture the entire function that was written and then run it based on the "section" that calls the function
     // the return is conslole logs and return statments (return statements match to the test case)
     if (runProgram) {
+      fetch("http://localhost:3000/interpret", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_code: code,
+          test_cases: testCases,
+        }),
+      });
       workerRef.current = new Worker(new URL("./worker.ts", import.meta.url));
       workerRef.current.postMessage({ code, language });
       workerRef.current.onmessage = (e) => {
