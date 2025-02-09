@@ -15,6 +15,7 @@ from livekit.plugins import openai
 
 from prompts import INSTRUCTIONS, WELCOME_MESSAGE
 from assistant import AssistantFnc
+from singleton import Singleton
 
 from dotenv import load_dotenv
 
@@ -37,28 +38,26 @@ print("Load_dotenv result:", result)
 # Print all environment variables (don't share this output if it contains sensitive info)
 print("Environment variables:", {k: v for k, v in os.environ.items() if "KEY" in k})
 
+assistant_fnc = Singleton.get_instance()
+
 
 async def entrypoint(ctx: JobContext):
     logger.info(f"connecting to room {ctx.room.name}")
     await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
     await ctx.wait_for_participant()
 
-    run_multimodal_agent(ctx)
+    run_multimodal_agent(ctx, assistant_fnc)
 
     logger.info("agent started")
 
 
-def run_multimodal_agent(ctx: JobContext):
+def run_multimodal_agent(ctx: JobContext, assistant_fnc: AssistantFnc):
     logger.info("starting multimodal agent")
 
     model = openai.realtime.RealtimeModel(
         instructions=INSTRUCTIONS,
         modalities=["audio", "text"],
     )
-
-    # create a chat context with chat history, these will be synchronized with the server
-    # upon session establishment
-    assistant_fnc = AssistantFnc()
 
     agent = MultimodalAgent(
         model=model,

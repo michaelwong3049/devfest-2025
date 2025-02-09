@@ -6,6 +6,6 @@ modal
 groq
 fastapi
 uvicorn
-socketio
 flask
 flask-cors
+flask-socketio
