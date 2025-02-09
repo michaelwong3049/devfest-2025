@@ -1,6 +1,8 @@
 import modal
 import logging
 import ast
+import io
+import contextlib
 
 app = modal.App("code_interpreter") # creates container to store all info for code interpreter
 
@@ -15,6 +17,7 @@ test_cases = [
 
 user_code = """
 def user_function(nums):
+    print("Hello World")
     unique_nums = list(set(nums))  # Remove duplicates
     if len(unique_nums) < 2:
         return None
@@ -51,11 +54,15 @@ def interpret_code(user_code: str, test_cases: list): # should take the users co
 
         for test_case in test_cases:
             try:
-                result = user_func(*test_case["input"]) # takes user's input from user code and runs it with the test case input
+                with io.StringIO() as buf, contextlib.redirect_stdout(buf): # redirecting the output of the code to a buffer
+                    result = user_func(*test_case["input"]) # takes user's input from user code and runs it with the test case input
+                    stdoutput = buf.getvalue() # gets the output from the buffer
+
                 results.append({
                     "input": test_case["input"],
                     "expected": test_case["expected_output"],
                     "output": result,
+                    "std output": stdoutput,
                     "passed": result == test_case["expected_output"]
                 })
                 logging.info(f"Test case passed: {result == test_case['expected_output']}") # logs if the test case passed or failed
@@ -65,6 +72,7 @@ def interpret_code(user_code: str, test_cases: list): # should take the users co
                         "input": test_case["input"],
                         "expected": test_case["expected_output"],
                         "output": result,
+                        "std output": stdoutput,
                         "passed": result == test_case["expected_output"],
                     }
                 )  # if the code fails, it adds the test case to the results
@@ -89,4 +97,5 @@ if __name__ == "__main__":
             print(f"Input: {result['input']}")
             print(f"Expected: {result['expected']}")
             print(f"Got: {result['output']}")
+            print(f"Std Output: {result['std output']}")
             print(f"Passed: {result['passed']}")

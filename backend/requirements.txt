@@ -7,3 +7,5 @@ groq
 fastapi
 uvicorn
 socketio
+flask
+flask-cors
