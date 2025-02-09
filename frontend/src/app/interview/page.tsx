@@ -14,6 +14,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "../../components/ui/avatar";
+import { Button } from "../../components/ui/button";
 //import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 //import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Editor, EditorProps } from "@monaco-editor/react";
@@ -24,14 +25,13 @@ import AgentInterface from "@/components/AgentInterface";
 export default function InterviewPage() {
   const [code, setCode] = useState("// Write your code here");
   const [answer, setAnswer] = useState();
-  const [language, setLanguage] = useState<string>("javascript");
-  const [runProgram, setRunProgram] = useState<boolean>(false);
+  const [language, setLanguage] = useState<string>("python");
+  const [output, setOutput] = useState<string>("");
 
   const [runGPT, setRunGPT] = useState<boolean>(false);
   const searchParams = useSearchParams();
   const topic = searchParams.get("topic");
   const difficulty = searchParams.get("difficulty");
-  const workerRef = useRef<Worker>();
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
 
   const [question, setQuestion] = useState({
@@ -61,31 +61,36 @@ export default function InterviewPage() {
     }
   };
 
-  useEffect(() => {
-    // javascript workers allow you to run javascript in another enviornment for improved safety over something like eval()
-    // the idea of this is to capture the entire function that was written and then run it based on the "section" that calls the function
-    // the return is conslole logs and return statments (return statements match to the test case)
-    if (runProgram) {
-      fetch("http://localhost:3000/interpret", {
+  const handleInterpreter = async () => {
+    try {
+      const response = await fetch("http://localhost:5000", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           user_code: code,
-          test_cases: testCases,
+          test_cases: [
+            { input: [[10, 20, 4, 45, 99]], expected_output: 45 },
+            { input: [[5, 5, 5, 5]], expected_output: null },
+            { input: [[1, 2]], expected_output: 1 },
+            { input: [[100]], expected_output: null },
+            { input: [[-5, -1, -10, -3]], expected_output: -3 },
+            { input: [[3, 3, 5, 5, 7, 7]], expected_output: 5 },
+          ],
         }),
       });
-      workerRef.current = new Worker(new URL("./worker.ts", import.meta.url));
-      workerRef.current.postMessage({ code, language });
-      workerRef.current.onmessage = (e) => {
-        setAnswer(e.data);
-      };
-      console.log(answer);
-      return () => workerRef.current?.terminate();
+      const data = await response.json();
+      setOutput(data);
+    } catch (error) {
+      console.error("Error:", error);
     }
+  };
 
-    setRunProgram(false);
+  useEffect(() => {
+    // javascript workers allow you to run javascript in another enviornment for improved safety over something like eval()
+    // the idea of this is to capture the entire function that was written and then run it based on the "section" that calls the function
+    // the return is conslole logs and return statments (return statements match to the test case)
 
     if (runGPT) {
       const fetchGPTResult = async () => {
@@ -113,9 +118,8 @@ export default function InterviewPage() {
         "Input: nums = [2,7,11,15], target = 9\nOutput: [0,1]\nExplanation: Because nums[0] + nums[1] == 9, we return [0, 1].",
     });
 
-    setRunProgram(false);
     setRunGPT(false);
-  }, [topic, difficulty, runProgram, runGPT]);
+  }, [topic, difficulty, runGPT]);
 
   return (
     <div className="flex h-screen">
@@ -160,13 +164,13 @@ export default function InterviewPage() {
         </div>
         <div className="flex-grow">
           <div className="flex flex-col">
-            <button onClick={showValue}>show value</button>
-            <button onClick={() => setRunProgram(true)}>Run</button>
-            <button onClick={() => setRunGPT(true)}>GPT</button>
+            <Button onClick={showValue}>show value</Button>
+            <Button onClick={() => handleInterpreter()}>Run</Button>
+            <Button onClick={() => setRunGPT(true)}>GPT</Button>
           </div>
           <Editor
             height="90vh"
-            defaultLanguage="javascript"
+            defaultLanguage={language}
             defaultValue="// some code here"
             onMount={handleEditorDidMount}
             onChange={handleEditorChange}

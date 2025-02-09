@@ -1,20 +1,32 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from code_interpreter import interpret_code
 
-app = Flask(__name__) # creates a new Flask app
+app = Flask(__name__)
+CORS(app)
+# CORS(app, resources={
+#     r"/*": {
+#         "origins": ["http://localhost:3000", "http://127.0.0.1:3000"],
+#         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+#         "allow_headers": ["Content-Type", "Authorization"]
+#     }
+# })
 
-@app.route("/interpret", methods=["POST"]) # initializes a route for the interpret function in the frontend
+@app.route('/')
+def index():
+    return "Hello, World!"
 
+@app.route('/interpret', methods=['POST'])
 def interpret():
-    data = request.get_json() # gets the json data from the frontend
-    user_code = data["user_code"]
-    test_cases = data["test_cases"] 
-
-    if not test_cases or not user_code:
-        return jsonify({"error": "Missing user code or test cases"})
+    data = request.json
+    user_code = data.get('user_code')
+    test_cases = data.get('test_cases')
     
-    results = interpret_code(user_code, test_cases) # uses the interpret_code function through an API endpoint to call run the tests through the frontend
-    return jsonify(results) # turns the results into json for the frontend to easily read
+    if not user_code or not test_cases:
+        return jsonify({"error": "Invalid input"}), 400
+    
+    results = interpret_code(user_code, test_cases)
+    return jsonify(results)
 
-if __name__ == "__main__":
-    app.run(debug=True) # runs the app in debug mode
+if __name__ == '__main__':
+    app.run(debug=True)
