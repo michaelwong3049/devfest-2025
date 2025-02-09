@@ -1,7 +1,6 @@
 "use client";
 
-import React from "react";
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Tabs,
@@ -21,8 +20,8 @@ import { Editor, EditorProps } from "@monaco-editor/react";
 import { handleGroq } from "@/lib/utils";
 import * as monaco from "monaco-editor";
 import AgentInterface from "@/components/AgentInterface";
-import { setLogExtension } from "livekit-client";
-import test from "node:test";
+
+import io, { Socket } from "socket.io-client";
 
 interface TestCase {
   input: string | number | Array<string | number>;
@@ -42,12 +41,54 @@ export default function InterviewPage() {
   const [answer, setAnswer] = useState();
   const [language, setLanguage] = useState<string>("python");
   const [output, setOutput] = useState<string>("");
+  const [interviewInfo, setInterviewInfo] =
+    useState<InterviewInfoProps | null>();
 
   const [runGPT, setRunGPT] = useState<boolean>(false);
   const searchParams = useSearchParams();
   const topic = searchParams.get("topic");
   const difficulty = searchParams.get("difficulty");
+
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
+  const socketRef = useRef<Socket | null>(null);
+
+  useEffect(() => {
+    // Create the socket connection
+    socketRef.current = io("http://localhost:5000");
+
+    socketRef.current.on("connect", () => {
+      console.log("Connected to WebSocket server");
+    });
+
+    socketRef.current.on("disconnect", () => {
+      console.log("Disconnected from WebSocket server");
+    });
+
+    return () => {
+      socketRef.current?.disconnect();
+    };
+  }, []);
+
+  // Debounce function to limit update frequency.
+  const debounce = (func: Function, delay: number) => {
+    let timer: NodeJS.Timeout;
+    return (...args: any[]) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        func(...args);
+      }, delay);
+    };
+  };
+
+  const emitCodeUpdate = debounce((newCode: string) => {
+    console.log("Sending code update:", newCode);
+    socketRef.current?.emit("update_code", { code: newCode });
+  }, 500);
+
+  const emitQuestionUpdate = debounce((newQuestion: string) => {
+    console.log("Sending question update:", newQuestion);
+    socketRef.current?.emit("update_question", { question: newQuestion });
+  }, 500);
 
   const [question, setQuestion] = useState({
     title: "",
@@ -67,6 +108,7 @@ export default function InterviewPage() {
   const handleEditorChange = (value?: string) => {
     if (value) {
       setCode(value);
+      emitCodeUpdate(value);
     }
   };
 
@@ -120,6 +162,8 @@ export default function InterviewPage() {
           console.log(result.test_cases[i].expected_output);
         }
         console.log(result);
+        setInterviewInfo(result);
+        emitCodeUpdate(result.question); // Socket connection to send the question to the backend
       };
       fetchGPTResult();
     }
@@ -158,12 +202,17 @@ export default function InterviewPage() {
           <TabsContent value="testcases" className="h-full overflow-auto">
             <h3 className="text-xl font-semibold mb-2">Test Cases:</h3>
             <pre className="bg-gray-100 p-2 rounded">
-              {/* {interviewInfo?.test_cases.map((test_case, index) => (
-		`Test Case ${index}:
-		    Input: ${typeof test_case.input === "object" ? Object.values(test_case.input)[0] : test_case.input }
+              {interviewInfo?.test_cases.map(
+                (test_case, index) =>
+                  `Test Case ${index}:
+		    Input: ${
+          typeof test_case.input === "object"
+            ? Object.values(test_case.input)[0]
+            : test_case.input
+        }
 		    Expected Output: ${test_case.expected_output}
 		`
-	      ))} */}
+              )}
             </pre>
           </TabsContent>
         </Tabs>
