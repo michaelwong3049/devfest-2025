@@ -26,6 +26,7 @@ class AssistantFnc(llm.FunctionContext):
 
     @llm.ai_callable(description="Get the current question")
     def get_question(self):
+        """Called when the user asks for the current question"""
         return self._question
 
     def set_question(self, new_question: str):
@@ -33,6 +34,7 @@ class AssistantFnc(llm.FunctionContext):
 
     @llm.ai_callable(description="Get the user's current code")
     def get_user_code(self):
+        """Called when you need to access the code of the user"""
         return self._user_code
 
     def set_user_code(self, new_code: str):
@@ -43,12 +45,17 @@ class AssistantFnc(llm.FunctionContext):
         self, query: Annotated[str, llm.TypeInfo(description="The search query")]
     ):
         """Called when the user asks to search for something"""
-        return f"searching for {query}"
+        return "Binary search"
 
     @llm.ai_callable(description="Create a hint for the user")
     async def generate_hint(
         self,
-        user_code: Annotated[str, llm.TypeInfo(description="The user's current code inside of the editor for the question.")],
+        user_code: Annotated[
+            str,
+            llm.TypeInfo(
+                description="The user's current code inside of the editor for the question."
+            ),
+        ],
     ):
         """Called when the user asks for a hint or for help. This function will return some hint or form of guidance to the user."""
         logger.info(f"getting hint for {user_code}")
