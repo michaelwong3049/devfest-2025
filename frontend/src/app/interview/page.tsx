@@ -16,12 +16,13 @@ import {
 import { Button } from "../../components/ui/button";
 //import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 //import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Editor, EditorProps } from "@monaco-editor/react";
 import { handleGroq } from "@/lib/utils";
 import * as monaco from "monaco-editor";
 import AgentInterface from "@/components/AgentInterface";
-import { Editor } from "@monaco-editor/react";
 
 import io, { Socket } from "socket.io-client";
+import { run } from "node:test";
 
 interface TestCase {
   input: string | number | Array<string | number>;
@@ -38,11 +39,13 @@ interface InterviewInfoProps {
 
 export default function InterviewPage() {
   const [code, setCode] = useState("// Write your code here");
+  const [answer, setAnswer] = useState();
   const [language, setLanguage] = useState<string>("python");
-  const [output, setOutput] = useState([]);
+  const [output, setOutput] = useState<any[]>([]);
   const [interviewInfo, setInterviewInfo] =
     useState<InterviewInfoProps | null>();
   const [showOutput, setShowOutput] = useState<boolean>(false);
+  const [runGPT, setRunGPT] = useState<boolean>(false);
   const searchParams = useSearchParams();
   const topic = searchParams.get("topic");
   const difficulty = searchParams.get("difficulty");
