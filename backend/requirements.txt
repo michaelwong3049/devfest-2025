@@ -3,3 +3,4 @@ livekit-agents>=0.12.11
 livekit-plugins-openai>=0.10.17
 python-dotenv~=1.0
 modal
+flask
