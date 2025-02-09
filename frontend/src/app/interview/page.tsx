@@ -19,6 +19,7 @@ import { Button } from "../../components/ui/button";
 import { handleGroq } from "@/lib/utils";
 import * as monaco from "monaco-editor";
 import AgentInterface from "@/components/AgentInterface";
+import { Editor } from "@monaco-editor/react";
 
 import io, { Socket } from "socket.io-client";
 
@@ -37,7 +38,7 @@ interface InterviewInfoProps {
 
 export default function InterviewPage() {
   const [code, setCode] = useState("// Write your code here");
-  // const [language, setLanguage] = useState<string>("python");
+  const [language, setLanguage] = useState<string>("python");
   const [output, setOutput] = useState([]);
   const [interviewInfo, setInterviewInfo] =
     useState<InterviewInfoProps | null>();
