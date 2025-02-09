@@ -21,6 +21,21 @@ import { Editor, EditorProps } from "@monaco-editor/react";
 import { handleGroq } from "@/lib/utils";
 import * as monaco from "monaco-editor";
 import AgentInterface from "@/components/AgentInterface";
+import { setLogExtension } from "livekit-client";
+import test from "node:test";
+
+interface TestCase {
+  input: string | number | Array<string | number>;
+  expected_output: string | number | Array<string | number>;
+}
+
+interface InterviewInfoProps {
+  question: string;
+  example: Array<string>;
+  difficulty: string;
+  constraints: string;
+  test_cases: Array<TestCase>;
+}
 
 export default function InterviewPage() {
   const [code, setCode] = useState("// Write your code here");
@@ -142,13 +157,12 @@ export default function InterviewPage() {
           <TabsContent value="testcases" className="h-full overflow-auto">
             <h3 className="text-xl font-semibold mb-2">Test Cases:</h3>
             <pre className="bg-gray-100 p-2 rounded">
-              {`Test Case 1:
-		            Input: ...
-		            Expected Output: ...
-
-		            Test Case 2:
-		            Input: ...
-		            Expected Output: ...`}
+              {interviewInfo?.test_cases.map((test_case, index) => (
+		`Test Case ${index}:
+		    Input: ${typeof test_case.input === "object" ? Object.values(test_case.input)[0] : test_case.input }
+		    Expected Output: ${test_case.expected_output}
+		`
+	      ))}
             </pre>
           </TabsContent>
         </Tabs>
