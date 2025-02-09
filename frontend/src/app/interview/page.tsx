@@ -20,14 +20,30 @@ import { Editor, EditorProps } from "@monaco-editor/react"
 import { handleGroq } from "@/lib/utils";
 import * as monaco from "monaco-editor";
 import AgentInterface from "@/components/AgentInterface";
+import { setLogExtension } from "livekit-client";
+import test from "node:test";
+
+interface TestCase {
+  input: string | number | Array<string | number>;
+  expected_output: string | number | Array<string | number>;
+}
+
+interface InterviewInfoProps {
+  question: string;
+  example: Array<string>;
+  difficulty: string;
+  constraints: string;
+  test_cases: Array<TestCase>;
+}
 
 export default function InterviewPage() {
   const [code, setCode] = useState("// Write your code here");
   const [answer, setAnswer] = useState();
   const [language, setLanguage] = useState<string>("javascript");
   const [runProgram, setRunProgram] = useState<boolean>(false);
-
+  const [interviewInfo, setInterviewInfo] = useState<InterviewInfoProps | undefined>(undefined);
   const [runGPT, setRunGPT] = useState<boolean>(false);
+
   const searchParams = useSearchParams()
   const topic = searchParams.get("topic")
   const difficulty = searchParams.get("difficulty")
@@ -61,7 +77,7 @@ export default function InterviewPage() {
     }
   };
 
-  useEffect(() => {
+useEffect(() => {
     // javascript workers allow you to run javascript in another enviornment for improved safety over something like eval()
     // the idea of this is to capture the entire function that was written and then run it based on the "section" that calls the function
     // the return is conslole logs and return statments (return statements match to the test case)
@@ -80,33 +96,38 @@ export default function InterviewPage() {
 
     if(runGPT) {
       const fetchGPTResult = async () => {
-	const result = await handleGroq();
-	console.log(result.question);
-	console.log(result.examples);
-	console.log(result.difficulty);
-	console.log(result.constraints);
-	for(let i  = 0; i < result.test_cases.length; i++) {
-	  console.log(result.test_cases[i].input);
-	  console.log(result.test_cases[i].expected_output);
-	}
+        const result = await handleGroq();
 	console.log(result);
-      }
-      fetchGPTResult();
-    }
-  
-    // In a real app, you would fetch the question from an API based on the topic and difficulty
-    setQuestion({
-      title: `Sample ${topic} Question (${difficulty})`,
-      description:
-        "This is a sample question description. In a real app, this would be fetched from an API.",
-      constraints: "- 1 <= n <= 10^5\n- -10^9 <= nums[i] <= 10^9",
-      examples:
-        "Input: nums = [2,7,11,15], target = 9\nOutput: [0,1]\nExplanation: Because nums[0] + nums[1] == 9, we return [0, 1].",
-    })
 
-    setRunProgram(false);
-    setRunGPT(false);
-  }, [topic, difficulty, runProgram, runGPT])
+        const setInfo = (result: any) => {
+          setInterviewInfo(prevInfo => ({
+            ...prevInfo, 
+            question: result.question,
+            example: result.examples,
+            difficulty: result.difficulty,
+            constraints: result.constraints,
+            test_cases: result.test_cases,
+          }));
+        }
+
+        setInfo(result);
+      };
+
+      fetchGPTResult();  // <- Missing semicolon here
+      // In a real app, you would fetch the question from an API based on the topic and difficulty
+      setQuestion({
+        title: `Sample ${topic} Question (${difficulty})`,
+        description:
+          "This is a sample question description. In a real app, this would be fetched from an API.",
+        constraints: "- 1 <= n <= 10^5\n- -10^9 <= nums[i] <= 10^9",
+        examples:
+          "Input: nums = [2,7,11,15], target = 9\nOutput: [0,1]\nExplanation: Because nums[0] + nums[1] == 9, we return [0, 1].",
+      })
+
+      setRunProgram(false);
+      setRunGPT(false);
+    }
+  }, [topic, difficulty, runProgram, runGPT]);
 
   return (
     <div className="flex h-screen">
@@ -129,13 +150,12 @@ export default function InterviewPage() {
           <TabsContent value="testcases" className="h-full overflow-auto">
             <h3 className="text-xl font-semibold mb-2">Test Cases:</h3>
             <pre className="bg-gray-100 p-2 rounded">
-              {`Test Case 1:
-		            Input: ...
-		            Expected Output: ...
-
-		            Test Case 2:
-		            Input: ...
-		            Expected Output: ...`}
+              {interviewInfo?.test_cases.map((test_case, index) => (
+		`Test Case ${index}:
+		    Input: ${typeof test_case.input === "object" ? Object.values(test_case.input)[0] : test_case.input }
+		    Expected Output: ${test_case.expected_output}
+		`
+	      ))}
             </pre>
           </TabsContent>
         </Tabs>
