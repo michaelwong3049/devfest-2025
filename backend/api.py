@@ -1,6 +1,7 @@
+import logging
 from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
-from code_interpreter import interpret_code
+from code_interpreter import app, interpret_code
 
 from flask_socketio import SocketIO, emit
 from singleton import Singleton
@@ -18,6 +19,9 @@ CORS(
         }
     },
 )
+
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 socketio = SocketIO(app, cors_allowed_origins="*")
 assistant_fnc = Singleton.get_instance()
@@ -54,24 +58,28 @@ def connect():
 
 @app.route("/")
 def index():
-    return "Hello, World!"
+  return jsonify({ "hello": " Hello, World!"})
 
+@flask_app.route('/interpret', methods=['GET'])
+@cross_origin(support_credentials=True)
+def index():
+  return jsonify({ "hello": " Hello, World!"})
 
-@app.route("/interpret", methods=["POST"])
-@cross_origin()
+# with app.run():
+@flask_app.route('/interpret', methods=['POST'])
+@cross_origin(support_credentials=True)
 def interpret():
-    data = request.json
-    print(data)
-    user_code = data.get("user_code")
-    test_cases = data.get("test_cases")
+  data = request.get_json()
+  user_code = data.get('user_code')
+  test_cases = data.get('test_cases')
 
-    if not user_code or not test_cases:
-        return jsonify({"error": "Invalid input"}), 400
+  if not user_code or not test_cases:
+    return jsonify({"error": "Invalid input"}), 400
 
-    results = interpret_code(user_code, test_cases)
+  with app.run() as modal_context:
+    results = interpret_code.remote(user_code, test_cases)
     return jsonify(results)
 
-
-if __name__ == "__main__":
-    app.run(debug=True)
+if __name__ == '__main__':
+    flask_app.run(host="localhost", port=5000, debug=True)
     socketio.run(app)
