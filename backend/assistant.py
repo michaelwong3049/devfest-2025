@@ -10,11 +10,11 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 # Load environment variables from .env.local file
-load_dotenv(dotenv_path="backend/.env.local")
+load_dotenv()
 
 # Debug print to check if the environment variable is loaded
 print("GROQ_API_KEY:", os.getenv("GROQ_API_KEY"))
-
+print("LIVEKIT API KEY:", os.getenv("LIVEKIT_API_KEY"))
 
 class AssistantFnc(llm.FunctionContext):
     def __init__(self):

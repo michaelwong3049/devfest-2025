@@ -18,11 +18,24 @@ from assistant import AssistantFnc
 
 from dotenv import load_dotenv
 
+import os
+
 load_dotenv(dotenv_path="backend/.env.local")
 
 logger = logging.getLogger("my-worker")
 logger.setLevel(logging.INFO)
 
+print("Starting script...")
+print("Current working directory:", os.getcwd())
+
+# Try loading the env file with verbose output
+print("Attempting to load .env file...")
+env_path = ".env.local"  # Since you're already in the backend directory
+result = load_dotenv(dotenv_path=env_path, verbose=True)
+print("Load_dotenv result:", result)
+
+# Print all environment variables (don't share this output if it contains sensitive info)
+print("Environment variables:", {k: v for k, v in os.environ.items() if 'KEY' in k})
 
 async def entrypoint(ctx: JobContext):
     logger.info(f"connecting to room {ctx.room.name}")
