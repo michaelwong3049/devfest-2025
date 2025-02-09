@@ -78,12 +78,13 @@ export default function InterviewPage() {
 
   const handleInterpreter = async () => {
     try {
-      const response = await fetch("http://localhost:5000", {
+      const response = await fetch("http://127.0.0.1:5000/interpret", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          username: "hi",
           user_code: code,
           test_cases: [
             { input: [[10, 20, 4, 45, 99]], expected_output: 45 },
@@ -157,12 +158,12 @@ export default function InterviewPage() {
           <TabsContent value="testcases" className="h-full overflow-auto">
             <h3 className="text-xl font-semibold mb-2">Test Cases:</h3>
             <pre className="bg-gray-100 p-2 rounded">
-              {interviewInfo?.test_cases.map((test_case, index) => (
+              {/* {interviewInfo?.test_cases.map((test_case, index) => (
 		`Test Case ${index}:
 		    Input: ${typeof test_case.input === "object" ? Object.values(test_case.input)[0] : test_case.input }
 		    Expected Output: ${test_case.expected_output}
 		`
-	      ))}
+	      ))} */}
             </pre>
           </TabsContent>
         </Tabs>
