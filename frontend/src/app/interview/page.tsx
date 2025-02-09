@@ -19,6 +19,7 @@ import { Button } from "../../components/ui/button";
 import { handleGroq } from "@/lib/utils";
 import * as monaco from "monaco-editor";
 import AgentInterface from "@/components/AgentInterface";
+import TestResults from "@/components/TestResults";
 import { Editor } from "@monaco-editor/react";
 
 import io, { Socket } from "socket.io-client";
@@ -163,7 +164,7 @@ export default function InterviewPage() {
           ? result.example.join("\n")
           : result?.example || "",
       });
-      emitCodeUpdate(result.question); // Socket connection to send the question to the backend
+      emitQuestionUpdate(result.question); // Socket connection to send the question to the backend
     };
     fetchGPTResult();
   }, [topic, difficulty]);
@@ -211,13 +212,13 @@ export default function InterviewPage() {
         <AgentInterface />
       </div>
       <div className="w-2/3 p-4 flex flex-col">
-        <div className="mb-4 flex items-center">
+        {/* <div className="mb-4 flex items-center">
           <Avatar className="h-12 w-12 mr-4">
             <AvatarImage src="/placeholder.svg" alt="AI Interviewer" />
             <AvatarFallback>AI</AvatarFallback>
           </Avatar>
           <span className="text-lg font-semibold">AI Interviewer</span>
-        </div>
+        </div> */}
         <div className="flex-grow">
           <div className="flex py-2 gap-2">
             {/* <Button onClick={showValue}>show value</Button> */}
@@ -226,29 +227,14 @@ export default function InterviewPage() {
           <Editor
             height="60vh"
             defaultLanguage={language}
-            defaultValue="// some code here"
+            defaultValue="# Write your code below!"
             onMount={handleEditorDidMount}
             onChange={handleEditorChange}
             theme="vs-dark"
           />
-          {showOutput && (
-            <div className="mt-4 p-4 bg-gray-100 rounded">
-              <h3 className="text-xl font-semibold mb-2">Output:</h3>
-              {output &&
-                output?.map((result: any, index: number) => (
-                  <div key={index} className="mb-2">
-                    <p>
-                      <strong>Test Case {index + 1}:</strong>
-                    </p>
-                    <p>Input: {JSON.stringify(result.input)}</p>
-                    <p>Expected Output: {JSON.stringify(result.expected)}</p>
-                    <p>Output: {JSON.stringify(result.output)}</p>
-                    <p>Passed: {result.passed ? "Yes" : "No"}</p>
-                    <p>Print Output: {result["std output"]}</p>
-                  </div>
-                ))}
-            </div>
-          )}
+          {/* {showOutput && ( */}
+          {output && <TestResults output={output} />}
+          {/* )} */}
         </div>
       </div>
     </div>
